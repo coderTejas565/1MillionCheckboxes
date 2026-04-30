@@ -4,6 +4,11 @@ import path from "node:path";
 import express from "express";
 import { Server } from "socket.io"
 
+const CHECKBOX_SIZE = 100
+const state = {
+  checkboxes: new Array(CHECKBOX_SIZE).fill(false)
+}
+
 async function main() {
   const PORT = process.env.PORT || 8021;
 
@@ -20,6 +25,7 @@ async function main() {
     socket.on('client:checkbox:change', (data) => {
       console.log(`socket: [Socket: ${socket.id}]:client:checkbox:change`,data);
       io.emit('server:checkbox:change',data)
+      state.checkboxes[data.index] = data.checked
     })
 
   }))
@@ -31,6 +37,10 @@ async function main() {
   app.get("/health", (req, res) =>
     res.json({ message: "Server is healthy", healthy: true }),
   );
+
+  app.get("/checkboxes",(req,res)=>{
+    res.json({ checkboxes: state.checkboxes})
+  })
   
   server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

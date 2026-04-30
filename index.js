@@ -15,9 +15,15 @@ async function main() {
 
   //socker IO handler
   io.on('connection',((socket) =>{
-    console.log(`Socket connected (id: ${socket.id})`);
+    console.log(`Socket connected`, { id: socket.id});
     
+    socket.on('client:checkbox:change', (data) => {
+      console.log(`socket: [Socket: ${socket.id}]:client:checkbox:change`,data);
+      io.emit('server:checkbox:change',data)
+    })
+
   }))
+
 
   // express handler
   app.use(express.static(path.resolve('./public')))

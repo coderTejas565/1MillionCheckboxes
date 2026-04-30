@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1 Million Checkboxes</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            color: #1f2937;
+
+            background: linear-gradient(135deg, #097fe8, #6dd5fa);
+            min-height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+        }
+
+        /* Optional subtitle feel */
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 30px;
+        }
+
+        #Container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            gap: 12px;
+
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 25px;
+
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #097fe8;
+
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        input[type="checkbox"]:hover {
+            transform: scale(1.25);
+            box-shadow: 0 0 8px rgba(255,255,255,0.8);
+        }
+
+        input[type="checkbox"]:checked {
+            transform: scale(1.15);
+        }
+
+        /* Optional: smooth scroll feel */
+        #Container::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>1 Million CheckBoxes</h1>
+    <p class="subtitle">Real-time collaborative grid (coming soon)</p>
+
+    <div id="Container"></div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const container = document.getElementById("Container")
+        const CHECKBOX_COUNT = 100;
+
+        new Array(CHECKBOX_COUNT).fill(null).forEach((_ , index) => {
+            const input = document.createElement('input');
+            input.type = "checkbox"
+
+            input.addEventListener('change',(event)=>{
+                const checked = event.target.checked
+                console.log('Checkbox Changed',{index , checked });
+            })
+
+            container.appendChild(input)
+        })
+    </script>
+</body>
+</html>

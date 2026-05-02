@@ -6,70 +6,143 @@
     <title>1 Million Checkboxes</title>
 
     <style>
-        body {
-            margin: 0;
-            padding: 40px 20px;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            color: #1f2937;
+       body {
+    margin: 0;
+    padding: 40px 20px;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    color: #1f2937;
 
-            background: linear-gradient(135deg, #097fe8, #6dd5fa);
-            min-height: 100vh;
-        }
+    background: radial-gradient(circle at top, #097fe8 0%, #0a4fa3 100%);
+    min-height: 100vh;
+}
 
-        h1 {
-            text-align: center;
-            color: white;
-            margin-bottom: 10px;
-            font-size: 2.5rem;
-            letter-spacing: 1px;
-        }
+/* ===== HEADER ===== */
+h1 {
+    text-align: center;
+    color: white;
+    margin-bottom: 8px;
+    font-size: 2.6rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
 
-        .subtitle {
-            text-align: center;
-            color: rgba(255,255,255,0.8);
-            margin-bottom: 30px;
-        }
+.subtitle {
+    text-align: center;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 35px;
+    font-size: 0.95rem;
+}
 
-        #Container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-            gap: 12px;
+/* ===== CONTAINER ===== */
+#Container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+    gap: 12px;
 
-            max-width: 750px;
-            margin: 0 auto;
-            padding: 25px;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 28px;
 
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.2);
 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
+    box-shadow: 
+        0 20px 50px rgba(0,0,0,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+}
 
-        input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            accent-color: #097fe8;
+/* ===== CHECKBOX ===== */
+input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
 
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
+    accent-color: #097fe8;
 
-        input[type="checkbox"]:hover {
-            transform: scale(1.25);
-            box-shadow: 0 0 8px rgba(255,255,255,0.8);
-        }
+    border-radius: 6px;
 
-        input[type="checkbox"]:checked {
-            transform: scale(1.15);
-        }
+    transition: all 0.15s ease;
+}
 
-        #Container::-webkit-scrollbar {
-            display: none;
-        }
+input[type="checkbox"]:hover {
+    transform: scale(1.25);
+    box-shadow: 0 0 10px rgba(9, 127, 232, 0.7);
+}
+
+input[type="checkbox"]:checked {
+    transform: scale(1.15);
+    box-shadow: 0 0 6px rgba(9, 127, 232, 0.8);
+}
+
+/* ===== TOAST ===== */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    min-width: 260px;
+    max-width: 320px;
+    padding: 12px 14px;
+
+    background: rgba(15, 23, 42, 0.95);
+    color: #fff;
+
+    border-radius: 12px;
+    border-left: 4px solid #097fe8;
+
+    box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+
+    font-size: 0.9rem;
+
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: toastIn 0.25s ease forwards;
+}
+
+.toast-icon {
+    font-weight: bold;
+    color: #097fe8;
+    font-size: 1.2rem;
+}
+
+.toast-message {
+    flex: 1;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: #bbb;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.toast-close:hover {
+    color: white;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes toastIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
     </style>
 </head>
 
@@ -78,11 +151,48 @@
     <p class="subtitle">Real-time collaborative grid (coming soon)</p>
 
     <div id="Container"></div>
+    <div id="toast-container"></div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io()
         const container = document.getElementById("Container")
+        const toastContainer = document.getElementById("toast-container")
         const CHECKBOX_COUNT = 100;
+
+function showErrorToast(message) { 
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.setAttribute('role','alert');
+
+    const icon = document.createElement("span");
+    icon.className = 'toast-icon';
+    icon.textContent = "!";
+
+    const text = document.createElement('span');
+    text.className = 'toast-message';
+    text.textContent = message;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.textContent = "x";
+
+    closeBtn.onclick = () => {
+        toast.remove();
+    };
+
+    toast.append(icon, text, closeBtn);
+    toastContainer.appendChild(toast);
+
+    // auto remove
+    setTimeout(() => {
+        toast.remove();
+    }, 4000);
+}
+
+        socket.on('server:error', (data) => {
+            const errormeMessage = (data && data.error || "Something went wrong. Please try again")
+            showErrorToast(errormeMessage)
+        })
 
         socket.on('server:checkbox:change',(data) => {
             console.log('socket server Event:',data);
@@ -93,7 +203,10 @@
             }
         })
 
-        window.addEventListener('load', async () => {
+        async function fetchStateFromServer(){
+            while (container.firstChild) {
+                container.removeChild(container.firstChild)
+            }
             const response = await fetch('/checkboxes', {method: 'GET'})
             const data = await response.json()
             if (data && data.checkboxes) {
@@ -107,11 +220,16 @@
                         const checked = event.target.checked;
                         console.log('Checkbox changed',{index, checked});
                         socket.emit('client:checkbox:change', {index, checked})
+                        fetchStateFromServer()
                         
                     })
                     container.appendChild(input)
                 })
             }
+        }
+
+        window.addEventListener('load', async () => {
+            fetchStateFromServer()
         })
     </script>
 </body>

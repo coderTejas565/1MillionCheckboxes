@@ -7,7 +7,9 @@ import { publisher, subscriber, redis } from "./redis-connection.js"
 import { channel } from "node:diagnostics_channel";
 
 const CHECKBOX_SIZE = 100
-const CHECKBOX_STATE_KEY = 'checkbox-state'
+const CHECKBOX_STATE_KEY = 'checkbox-statev1'
+
+const rateLimitingHashing = new Map()
 
 async function main() {
   const PORT = process.env.PORT || 8021;
@@ -35,6 +37,19 @@ async function main() {
 
     socket.on('client:checkbox:change', async (data) => {
       console.log(`socket: [Socket: ${socket.id}]:client:checkbox:change`,data);
+
+      const lastOperationTime = await redis.get(`rate-limiting${socket.id}`)
+      
+      if (lastOperationTime) {
+        const timeElaspsed = Date.now() - lastOperationTime
+        if (timeElaspsed < 5.5 * 1000) {
+          socket.emit('server:error', { error: `Please wait for ${timeElaspsed} s` })
+          return;
+        }
+      }
+       await redis.set(`rate-limiting${socket.id}`,Date.now())
+
+      
 
       const existingState = await redis.get(CHECKBOX_STATE_KEY)
       

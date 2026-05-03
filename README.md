@@ -291,4 +291,4 @@ Built as a learning project to master:
 
 # Final Note
 
-This is not just a UI project — it demonstrates **how real-time distributed systems are designed in production environments**.
+This is not just a UI project it demonstrates **how real-time distributed systems are designed in production environments**.

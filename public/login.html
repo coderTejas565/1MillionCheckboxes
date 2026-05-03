@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at top, #097fe8 0%, #0a4fa3 100%);
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(18px);
+      padding: 30px;
+      border-radius: 16px;
+      width: 320px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.2);
+      text-align: center;
+    }
+
+    h2 {
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+
+    input:focus {
+      outline: 2px solid #097fe8;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .signup {
+      background: #ffffff;
+      color: #0a4fa3;
+    }
+
+    .login {
+      background: #097fe8;
+      color: white;
+    }
+
+    button:hover {
+      transform: scale(1.03);
+    }
+
+    .title {
+      color: rgba(255,255,255,0.8);
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2>Welcome</h2>
+    <div class="title">Login / Signup to continue</div>
+
+    <input id="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
+    <input id="firstName" placeholder="First Name (for signup)" />
+
+    <button class="signup" onclick="signup()">Signup</button>
+    <button class="login" onclick="login()">Login</button>
+  </div>
+
+  <script>
+    async function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const firstName = document.getElementById("firstName").value;
+
+      const res = await fetch("/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, firstName })
+      });
+
+      const data = await res.json();
+      alert(data.message || "Signup done");
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        window.location.href = "/";
+      } else {
+        alert("Login failed");
+      }
+    }
+  </script>
+
+</body>
+</html>

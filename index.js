@@ -6,38 +6,42 @@ import { Server } from "socket.io"
 import { publisher, subscriber, redis } from "./redis-connection.js"
 import { channel } from "node:diagnostics_channel";
 
+import authRoutes from "./src/auth.js";
+
+
 const CHECKBOX_SIZE = 100
 const CHECKBOX_STATE_KEY = 'checkbox-statev1'
+
 
 const rateLimitingHashing = new Map()
 
 async function main() {
   const PORT = process.env.PORT || 8021;
-
+  
   const app = express();
   const server = http.createServer(app);
 
   const io = new Server()
   io.attach(server)
-
+  
   await subscriber.subscribe('internal-server:checkbox:change')
   subscriber.on('message', (channel, message) => {
     if (channel === 'internal-server:checkbox:change') {
-    const { index, checked } = JSON.parse(message)
-
+      const { index, checked } = JSON.parse(message)
+      
     io.emit('server:checkbox:change',{ index, checked})
   }
-
+  
   })
 
-
+  
   //socker IO handler
   io.on('connection',((socket) =>{
     console.log(`Socket connected`, { id: socket.id});
-
+    
     socket.on('client:checkbox:change', async (data) => {
       console.log(`socket: [Socket: ${socket.id}]:client:checkbox:change`,data);
-
+      
       const lastOperationTime = await redis.get(`rate-limiting${socket.id}`)
       
       if (lastOperationTime) {
@@ -47,10 +51,10 @@ async function main() {
           return;
         }
       }
-       await redis.set(`rate-limiting${socket.id}`,Date.now())
-
+      await redis.set(`rate-limiting${socket.id}`,Date.now())
       
-
+      
+      
       const existingState = await redis.get(CHECKBOX_STATE_KEY)
       
       if (existingState) {
@@ -58,12 +62,12 @@ async function main() {
         remoteData[data.index] = data.checked
         await redis.set(CHECKBOX_STATE_KEY, JSON.stringify(remoteData))
       }else{
-       await redis.set(CHECKBOX_STATE_KEY, JSON.stringify(new Array(CHECKBOX_SIZE).fill(false)) )
+        await redis.set(CHECKBOX_STATE_KEY, JSON.stringify(new Array(CHECKBOX_SIZE).fill(false)) )
       }
 
       await publisher.publish('internal-server:checkbox:change',JSON.stringify(data))
     })
-
+    
   }))
 
 
@@ -72,21 +76,24 @@ async function main() {
   
   app.get("/health", (req, res) =>
     res.json({ message: "Server is healthy", healthy: true }),
-  );
+);
 
-  app.get("/checkboxes", async (req,res)=>{
-    const existingState = await redis.get(CHECKBOX_STATE_KEY)
-    if (existingState) {
-      const remoteData = JSON.parse(existingState)
-      return res.json({ checkboxes: remoteData})
-    }
-    return res.json({ checkboxes: new Array(CHECKBOX_SIZE).fill(false) })
-  })
+app.get("/checkboxes", async (req,res)=>{
+  const existingState = await redis.get(CHECKBOX_STATE_KEY)
+  if (existingState) {
+    const remoteData = JSON.parse(existingState)
+    return res.json({ checkboxes: remoteData})
+  }
+  return res.json({ checkboxes: new Array(CHECKBOX_SIZE).fill(false) })
+})
+
+app.use(express.json());
+app.use("/auth", authRoutes);
   
-  server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
-  
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
 }
 
 main()

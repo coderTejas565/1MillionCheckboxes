@@ -6,231 +6,189 @@
     <title>1 Million Checkboxes</title>
 
     <style>
-       body {
-    margin: 0;
-    padding: 40px 20px;
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-    color: #1f2937;
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: #1f2937;
+            background: radial-gradient(circle at top, #097fe8 0%, #0a4fa3 100%);
+            min-height: 100vh;
+        }
 
-    background: radial-gradient(circle at top, #097fe8 0%, #0a4fa3 100%);
-    min-height: 100vh;
-}
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 8px;
+            font-size: 2.6rem;
+        }
 
-/* ===== HEADER ===== */
-h1 {
-    text-align: center;
-    color: white;
-    margin-bottom: 8px;
-    font-size: 2.6rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 35px;
+        }
 
-.subtitle {
-    text-align: center;
-    color: rgba(255,255,255,0.75);
-    margin-bottom: 35px;
-    font-size: 0.95rem;
-}
+        #Container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            gap: 12px;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 28px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+        }
 
-/* ===== CONTAINER ===== */
-#Container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-    gap: 12px;
+        input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
 
-    max-width: 780px;
-    margin: 0 auto;
-    padding: 28px;
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
 
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+        .toast {
+            background: black;
+            color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
 
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.2);
-
-    box-shadow: 
-        0 20px 50px rgba(0,0,0,0.25),
-        inset 0 1px 0 rgba(255,255,255,0.1);
-}
-
-/* ===== CHECKBOX ===== */
-input[type="checkbox"] {
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-
-    accent-color: #097fe8;
-
-    border-radius: 6px;
-
-    transition: all 0.15s ease;
-}
-
-input[type="checkbox"]:hover {
-    transform: scale(1.25);
-    box-shadow: 0 0 10px rgba(9, 127, 232, 0.7);
-}
-
-input[type="checkbox"]:checked {
-    transform: scale(1.15);
-    box-shadow: 0 0 6px rgba(9, 127, 232, 0.8);
-}
-
-/* ===== TOAST ===== */
-#toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    min-width: 260px;
-    max-width: 320px;
-    padding: 12px 14px;
-
-    background: rgba(15, 23, 42, 0.95);
-    color: #fff;
-
-    border-radius: 12px;
-    border-left: 4px solid #097fe8;
-
-    box-shadow: 0 12px 30px rgba(0,0,0,0.3);
-
-    font-size: 0.9rem;
-
-    opacity: 0;
-    transform: translateY(-10px);
-    animation: toastIn 0.25s ease forwards;
-}
-
-.toast-icon {
-    font-weight: bold;
-    color: #097fe8;
-    font-size: 1.2rem;
-}
-
-.toast-message {
-    flex: 1;
-}
-
-.toast-close {
-    background: none;
-    border: none;
-    color: #bbb;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.toast-close:hover {
-    color: white;
-}
-
-/* ===== ANIMATION ===== */
-@keyframes toastIn {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
+
     <h1>1 Million CheckBoxes</h1>
-    <p class="subtitle">Real-time collaborative grid (coming soon)</p>
+    <p class="subtitle">Real-time collaborative grid</p>
 
     <div id="Container"></div>
     <div id="toast-container"></div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io()
-        const container = document.getElementById("Container")
-        const toastContainer = document.getElementById("toast-container")
-        const CHECKBOX_COUNT = 100;
 
-function showErrorToast(message) { 
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.setAttribute('role','alert');
+        // 🔐 AUTH GUARD
+        const token = localStorage.getItem("token");
 
-    const icon = document.createElement("span");
-    icon.className = 'toast-icon';
-    icon.textContent = "!";
-
-    const text = document.createElement('span');
-    text.className = 'toast-message';
-    text.textContent = message;
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'toast-close';
-    closeBtn.textContent = "x";
-
-    closeBtn.onclick = () => {
-        toast.remove();
-    };
-
-    toast.append(icon, text, closeBtn);
-    toastContainer.appendChild(toast);
-
-    // auto remove
-    setTimeout(() => {
-        toast.remove();
-    }, 4000);
-}
-
-        socket.on('server:error', (data) => {
-            const errormeMessage = (data && data.error || "Something went wrong. Please try again")
-            showErrorToast(errormeMessage)
-        })
-
-        socket.on('server:checkbox:change',(data) => {
-            console.log('socket server Event:',data);
-            const { index, checked } = data
-            const input = document.getElementById(`checkbox-${index}`)
-            if (input) {
-                input.checked = checked
-            }
-        })
-
-        async function fetchStateFromServer(){
-            while (container.firstChild) {
-                container.removeChild(container.firstChild)
-            }
-            const response = await fetch('/checkboxes', {method: 'GET'})
-            const data = await response.json()
-            if (data && data.checkboxes) {
-                data.checkboxes.forEach((serverValue,index) =>{
-                    const input = document.createElement('input')
-                    input.type = 'checkbox'
-                    input.id = `checkbox-${index}`
-                    input.checked = serverValue;
-
-                    input.addEventListener('change',(event) => {
-                        const checked = event.target.checked;
-                        console.log('Checkbox changed',{index, checked});
-                        socket.emit('client:checkbox:change', {index, checked})
-                        fetchStateFromServer()
-                        
-                    })
-                    container.appendChild(input)
-                })
-            }
+        if (!token) {
+            window.location.href = "/login.html";
         }
 
-        window.addEventListener('load', async () => {
-            fetchStateFromServer()
-        })
+        const container = document.getElementById("Container");
+        const toastContainer = document.getElementById("toast-container");
+
+        let socket;
+
+        // 🔌 SOCKET INIT
+        async function initSocket() {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                window.location.href = "/login.html";
+                return;
+            }
+
+            socket = io({
+                auth: { token }
+            });
+
+            setupSocketEvents();
+        }
+
+        // 🔁 SOCKET EVENTS
+        function setupSocketEvents() {
+
+            socket.on("connect", () => {
+                console.log("Connected:", socket.id);
+            });
+
+            socket.on("connect_error", (err) => {
+                console.log("Socket error:", err.message);
+
+                if (err.message === "Unauthorized") {
+                    localStorage.removeItem("token");
+                    alert("Session expired. Login again.");
+                    window.location.href = "/login.html";
+                }
+            });
+
+            socket.on("server:error", (data) => {
+                showErrorToast(data?.error || "Something went wrong");
+            });
+
+            socket.on("server:checkbox:change", (data) => {
+                const { index, checked } = data;
+                const input = document.getElementById(`checkbox-${index}`);
+                if (input) {
+                    input.checked = checked;
+                }
+            });
+        }
+
+        // 🔔 TOAST
+        function showErrorToast(message) {
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // 📦 FETCH STATE (kept intentionally)
+        async function fetchStateFromServer() {
+            container.innerHTML = "";
+
+            const res = await fetch("/checkboxes");
+            const data = await res.json();
+
+            data.checkboxes.forEach((value, index) => {
+                const input = document.createElement("input");
+                input.type = "checkbox";
+                input.id = `checkbox-${index}`;
+                input.checked = value;
+
+                input.addEventListener("change", (e) => {
+                    const checked = e.target.checked;
+
+                    if (socket && socket.connected) {
+                        socket.emit("client:checkbox:change", { index, checked });
+                    }
+
+                    // keeping your logic
+                    fetchStateFromServer();
+                });
+
+                container.appendChild(input);
+            });
+        }
+
+        // 🚪 LOGOUT
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "/login.html";
+        }
+
+        // 🚀 INIT
+        window.addEventListener("load", async () => {
+            await initSocket();
+            fetchStateFromServer();
+        });
+
     </script>
 </body>
 </html>
